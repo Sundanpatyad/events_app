@@ -1,7 +1,112 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
+const AnimatedStat = ({ value, label, duration = 2000 }) => {
+  const [currentValue, setCurrentValue] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const elementRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !isVisible) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (elementRef.current) {
+      observer.observe(elementRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [isVisible]);
+
+  useEffect(() => {
+    if (!isVisible) return;
+
+    const startTime = Date.now();
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progressValue = Math.min(elapsed / duration, 1);
+      
+      // Use easing function for smoother animation
+      const easeOutQuart = 1 - Math.pow(1 - progressValue, 4);
+      
+      setCurrentValue(Math.floor(value * easeOutQuart));
+      setProgress(easeOutQuart * 100);
+
+      if (progressValue < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    animate();
+  }, [isVisible, value, duration]);
+
+  const circumference = 2 * Math.PI * 58; // radius of 58
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+
+  return (
+    <div ref={elementRef} className="flex flex-col items-center">
+      <div className="relative w-32 h-32 mb-4">
+        {/* Background circle */}
+        <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 120 120">
+          <circle
+            cx="60"
+            cy="60"
+            r="58"
+            stroke="#e5e7eb"
+            strokeWidth="2"
+            fill="transparent"
+          />
+          {/* Progress circle */}
+          <circle
+            cx="60"
+            cy="60"
+            r="58"
+            stroke="black"
+            strokeWidth="3"
+            fill="transparent"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            className="transition-all duration-700 ease-out"
+            style={{
+              transition: 'stroke-dashoffset 0.1s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+          />
+        </svg>
+        {/* Counter text */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span 
+            className="text-4xl font-light text-gray-900 transition-all duration-200 ease-out"
+            style={{ 
+              transform: `scale(${1 + (progress / 100) * 0.1})`,
+              transition: 'transform 0.1s ease-out'
+            }}
+          >
+            {currentValue}
+          </span>
+        </div>
+      </div>
+      <p className="text-sm text-gray-600 text-center max-w-24">
+        {label}
+      </p>
+    </div>
+  );
+};
+
 const PortfolioSection = () => {
+  const stats = [
+    { value: 20, label: "lat doświadczenia", duration: 2200 },
+    { value: 200, label: "projektów rocznie", duration: 2400 },
+    { value: 150, label: "osób na pokładzie", duration: 2600 },
+    { value: 30, label: "prestiżowych nagród i publikacji", duration: 2000 }
+  ];
+
   return (
     <section className="py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-6">
@@ -68,32 +173,16 @@ const PortfolioSection = () => {
           </div>
         </div>
 
-        {/* Statistics */}
+        {/* Animated Statistics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          <div className="flex flex-col items-center">
-            <div className="w-32 h-32 rounded-full border-2 border-gray-300 flex items-center justify-center mb-4">
-              <span className="text-4xl font-light">20</span>
-            </div>
-            <p className="text-sm text-gray-600">lat doświadczenia</p>
-          </div>
-          <div className="flex flex-col items-center">
-            <div className="w-32 h-32 rounded-full border-2 border-gray-300 flex items-center justify-center mb-4">
-              <span className="text-4xl font-light">200</span>
-            </div>
-            <p className="text-sm text-gray-600">projektów rocznie</p>
-          </div>
-          <div className="flex flex-col items-center">
-            <div className="w-32 h-32 rounded-full border-2 border-gray-300 flex items-center justify-center mb-4">
-              <span className="text-4xl font-light">150</span>
-            </div>
-            <p className="text-sm text-gray-600">osób na pokładzie</p>
-          </div>
-          <div className="flex flex-col items-center">
-            <div className="w-32 h-32 rounded-full border-2 border-gray-300 flex items-center justify-center mb-4">
-              <span className="text-4xl font-light">30</span>
-            </div>
-            <p className="text-sm text-gray-600">prestiżowych nagród i publikacji</p>
-          </div>
+          {stats.map((stat, index) => (
+            <AnimatedStat
+              key={index}
+              value={stat.value}
+              label={stat.label}
+              duration={stat.duration}
+            />
+          ))}
         </div>
       </div>
     </section>
