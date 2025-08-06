@@ -5,15 +5,14 @@ const HeroSection = () => {
     <section className="relative h-screen flex items-center justify-center">
       {/* Background Image */}
       <video 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        className="absolute inset-0 w-full h-full object-cover"
         src="https://videos.pexels.com/video-files/2890196/2890196-hd_1920_1080_30fps.mp4"
         autoPlay
         loop
         muted
         playsInline
-      >
-        <div className="absolute inset-0 bg-black/60"></div>
-      </video>
+      />
+      <div className="absolute inset-0 bg-black/60"></div>
 
       {/* Content */}
       <div className="relative z-10 text-center text-white px-6">
