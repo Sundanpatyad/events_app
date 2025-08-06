@@ -141,7 +141,7 @@ const PortfolioSection = () => {
           <div 
             className="h-80 lg:h-auto bg-cover bg-center"
             style={{
-              backgroundImage: 'url("https://images.pexels.com/photos/6186574/pexels-photo-6186574.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop")',
+              backgroundImage: 'url("https://images.pexels.com/photos/1708912/pexels-photo-1708912.jpeg")',
             }}
           ></div>
         </div>
@@ -151,7 +151,7 @@ const PortfolioSection = () => {
           <div 
             className="h-96 md:h-[600px] bg-cover bg-center rounded-lg"
             style={{
-              backgroundImage: 'url("https://images.pexels.com/photos/6186568/pexels-photo-6186568.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&fit=crop")',
+              backgroundImage: 'url("https://images.pexels.com/photos/716276/pexels-photo-716276.jpeg")',
             }}
           >
             <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent rounded-lg"></div>
