@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, Mail, Phone, Instagram, Facebook, Linkedin } from 'lucide-react';
 import FullScreenMenu from './FullScreenMenu';
+import logo from '../assets/logo.png';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -47,7 +48,7 @@ const Header = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex gap-2 items-center">
-             <img src="/src/assets/logo.png" alt=""  height={50} width={50}/>
+             <img src={logo} alt=""  height={50} width={50}/>
             <div className={isDarkBackground ? 'text-white' : 'text-black'}>
               <div className="text-sm font-light uppercase tracking-wider">Nakashi Expo Innovation </div>
             </div>
