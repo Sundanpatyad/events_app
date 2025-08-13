@@ -40,24 +40,16 @@ const Header = () => {
     <>
       <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
         isDarkBackground 
-          ? 'bg-black/80 backdrop-blur-sm' 
-          : 'bg-white/90 backdrop-blur-sm shadow-sm'
+          ? 'bg-black/40 backdrop-blur-md' 
+          : 'bg-white/90 backdrop-blur-md shadow-sm'
       }`}>
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center">
-            <div className={`w-8 h-8 border-2 mr-3 ${
-              isDarkBackground ? 'border-white' : 'border-black'
-            }`}>
-              <div className={`w-full h-full ${
-                isDarkBackground ? 'bg-white/20' : 'bg-black/20'
-              }`}></div>
-            </div>
+          <div className="flex gap-2 items-center">
+             <img src="/src/assets/logo.png" alt=""  height={50} width={50}/>
             <div className={isDarkBackground ? 'text-white' : 'text-black'}>
-              <div className="text-sm font-light tracking-wider">SMART</div>
-              <div className="text-sm font-light tracking-wider">DESIGN</div>
-              <div className="text-sm font-light tracking-wider">EXPO</div>
+              <div className="text-sm font-light uppercase tracking-wider">Nakashi Expo Innovation </div>
             </div>
           </div>
 
@@ -107,26 +99,7 @@ const Header = () => {
               </div>
             </div>
 
-            <div className="flex items-center space-x-3">
-              <Instagram className={`w-4 h-4 cursor-pointer transition-colors ${
-                isDarkBackground 
-                  ? 'text-white hover:text-gray-300' 
-                  : 'text-black hover:text-gray-600'
-              }`} />
-              <Facebook className={`w-4 h-4 cursor-pointer transition-colors ${
-                isDarkBackground 
-                  ? 'text-white hover:text-gray-300' 
-                  : 'text-black hover:text-gray-600'
-              }`} />
-              <Linkedin className={`w-4 h-4 cursor-pointer transition-colors ${
-                isDarkBackground 
-                  ? 'text-white hover:text-gray-300' 
-                  : 'text-black hover:text-gray-600'
-              }`} />
-              <span className={`text-sm ${
-                isDarkBackground ? 'text-white' : 'text-black'
-              }`}>Bé</span>
-            </div>
+         
           </div>
 
           {/* Mobile Menu Button */}

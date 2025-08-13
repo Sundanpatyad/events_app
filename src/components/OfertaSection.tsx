@@ -6,7 +6,7 @@ const OfertaSection = () => {
       <div className="max-w-7xl mx-auto px-6">
         {/* Main Heading */}
         <div className="text-center mb-16">
-          <h2 className="text-6xl md:text-8xl lg:text-9xl font-light mb-12">
+          <h2 className="text-6xl text-8xl font-bold md:text-9xl font-bold mb-12">
             Oferta
           </h2>
           <div className="max-w-4xl mx-auto">

@@ -5,6 +5,7 @@ import PortfolioSection from './components/PortfolioSection';
 import OfertaSection from './components/OfertaSection';
 import AboutSection from './components/AboutSection';
 import Footer from './components/Footer';
+import Social from './atoms/Social';
 
 function App() {
   return (

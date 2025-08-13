@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-const AnimatedStat = ({ value, label, duration = 2000 }) => {
+const AnimatedStat = ({ value , label, duration = 2000 }) => {
   const [currentValue, setCurrentValue] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
@@ -112,8 +112,8 @@ const PortfolioSection = () => {
       <div className="max-w-7xl mx-auto px-6">
         {/* Portfolio Header */}
         <div className="text-center mb-16">
-          <h2 className="text-6xl md:text-8xl font-light mb-8">
-            portfolio<span className="text-4xl">/</span>
+          <h2 className="text-8xl font-bold md:text-9xl font-bold mb-8">
+            portfolio<span className="text-8xl">/</span>
           </h2>
           <div className="max-w-3xl mx-auto">
             <p className="text-gray-700 text-lg leading-relaxed mb-4">

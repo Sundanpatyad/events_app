@@ -6,7 +6,7 @@ const AboutSection = () => {
       <div className="max-w-7xl mx-auto px-6">
         {/* Main Heading */}
         <div className="text-center mb-16">
-          <h2 className="text-5xl md:text-7xl lg:text-8xl font-light mb-8">
+          <h2 className="text-5x text-8xl font-bold md:text-9xl font-bold md:text-7xl lg:text-8xl font-light mb-8">
             O tym się<br />
             mówi<span className="text-4xl">.../</span>
           </h2>
