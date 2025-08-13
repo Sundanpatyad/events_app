@@ -47,7 +47,7 @@ const Header = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex gap-2 items-center">
-             <img src="/src/assets/logo.png" alt=""  height={50} width={50}/>
+             <img src="./src/assets/logo.png" alt=""  height={50} width={50}/>
             <div className={isDarkBackground ? 'text-white' : 'text-black'}>
               <div className="text-sm font-light uppercase tracking-wider">Nakashi Expo Innovation </div>
             </div>
