@@ -183,10 +183,7 @@ const CardShowcase = () => {
 
   return (
     <div className="min-h-screen ">
-      {/* Floating Geometric Elements */}
-      <div className="fixed top-20 right-20 w-1 h-24 bg-black opacity-20 animate-pulse"></div>
-      <div className="fixed bottom-32 left-20 w-24 h-1 bg-black opacity-20"></div>
-      <div className="fixed top-1/2 right-16 w-3 h-3 bg-black rotate-45 opacity-30"></div>
+ 
 
       <div className="py-20">
         <div className="max-w-7xl mx-auto px-6">
@@ -224,7 +221,7 @@ const CardShowcase = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
             {cards.map((card, index) => (
               <MinimalCard
-                key={index}
+                key={index} 
                 card={card}
                 index={index}
                 isActive={activeCard === index}
