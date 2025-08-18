@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, Mail, Phone, Instagram, Facebook, Linkedin } from 'lucide-react';
 import FullScreenMenu from './FullScreenMenu';
+import { HiOutlineMenuAlt2 } from "react-icons/hi";
 import logo from '../assets/logo.png';
 
 const Header = () => {
@@ -44,14 +45,14 @@ const Header = () => {
           ? 'bg-black/40 backdrop-blur-md' 
           : 'bg-white/90 backdrop-blur-md shadow-sm'
       }`}>
-      <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="max-w-7xl md:max-w-9xl lg:max-w-8xl mx-auto  py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex gap-4 items-center">
              <img src={logo} alt=""  height={80} width={80}/>
             <div className={isDarkBackground ? 'text-white' : 'text-black'}>
             <div className="text-sm font-light tracking-[0.2em] leading-tight">
-                  <div>Nakashi</div>
+                  <div className="uppercase">Nakashi</div>
                   <div>EXPO</div>
                   <div>INNOVATION</div>
                 </div>
@@ -68,11 +69,11 @@ const Header = () => {
               }`}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
-              <span className="text-sm tracking-wider">MENU</span>
-              <Menu className="w-4 h-4" />
+              <span className="text-xl tracking-wider">MENU</span>
+              <HiOutlineMenuAlt2 className="w-8 h-8" />
             </button>
             
-            <div className={`flex items-center space-x-6 text-sm ${
+            <div className={`flex items-center space-x-6 text-xl ${
               isDarkBackground ? 'text-white' : 'text-black'
             }`}>
               <span className={`cursor-pointer transition-colors ${

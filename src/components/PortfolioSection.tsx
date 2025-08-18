@@ -1,192 +1,198 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-
-const AnimatedStat = ({ value , label, duration = 2000 }) => {
-  const [currentValue, setCurrentValue] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const [isVisible, setIsVisible] = useState(false);
-  const elementRef = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !isVisible) {
-          setIsVisible(true);
-        }
-      },
-      { threshold: 0.5 }
-    );
-
-    if (elementRef.current) {
-      observer.observe(elementRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [isVisible]);
-
-  useEffect(() => {
-    if (!isVisible) return;
-
-    const startTime = Date.now();
-    const animate = () => {
-      const elapsed = Date.now() - startTime;
-      const progressValue = Math.min(elapsed / duration, 1);
-      
-      // Use easing function for smoother animation
-      const easeOutQuart = 1 - Math.pow(1 - progressValue, 4);
-      
-      setCurrentValue(Math.floor(value * easeOutQuart));
-      setProgress(easeOutQuart * 100);
-
-      if (progressValue < 1) {
-        requestAnimationFrame(animate);
-      }
-    };
-
-    animate();
-  }, [isVisible, value, duration]);
-
-  const circumference = 2 * Math.PI * 58; // radius of 58
-  const strokeDashoffset = circumference - (progress / 100) * circumference;
-
-  return (
-    <div ref={elementRef} className="flex flex-col items-center">
-      <div className="relative w-32 h-32 mb-4">
-        {/* Background circle */}
-        <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 120 120">
-          <circle
-            cx="60"
-            cy="60"
-            r="58"
-            stroke="#e5e7eb"
-            strokeWidth="2"
-            fill="transparent"
-          />
-          {/* Progress circle */}
-          <circle
-            cx="60"
-            cy="60"
-            r="58"
-            stroke="black"
-            strokeWidth="3"
-            fill="transparent"
-            strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
-            strokeLinecap="round"
-            className="transition-all duration-700 ease-out"
-            style={{
-              transition: 'stroke-dashoffset 0.1s cubic-bezier(0.4, 0, 0.2, 1)'
-            }}
-          />
-        </svg>
-        {/* Counter text */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span 
-            className="text-4xl font-light text-gray-900 transition-all duration-200 ease-out"
-            style={{ 
-              transform: `scale(${1 + (progress / 100) * 0.1})`,
-              transition: 'transform 0.1s ease-out'
-            }}
-          >
-            {currentValue}
-          </span>
-        </div>
-      </div>
-      <p className="text-sm text-gray-600 text-center max-w-24">
-        {label}
-      </p>
-    </div>
-  );
-};
 
 const PortfolioSection = () => {
-  const stats = [
-    { value: 20, label: "lat doświadczenia", duration: 2200 },
-    { value: 200, label: "projektów rocznie", duration: 2400 },
-    { value: 150, label: "osób na pokładzie", duration: 2600 },
-    { value: 30, label: "prestiżowych nagród i publikacji", duration: 2000 }
-  ];
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [headerVisible, setHeaderVisible] = useState(false);
+  const [contentVisible, setContentVisible] = useState(false);
+  const [projectVisible, setProjectVisible] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const headerRef = useRef(null);
+  const contentRef = useRef(null);
+  const projectRef = useRef(null);
+
+  useEffect(() => {
+    const observerOptions = {
+      threshold: 0.3,
+      rootMargin: '50px'
+    };
+
+    const headerObserver = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => setHeaderVisible(true), 100);
+      }
+    }, observerOptions);
+
+    const contentObserver = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => setContentVisible(true), 300);
+      }
+    }, observerOptions);
+
+    const projectObserver = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => setProjectVisible(true), 500);
+      }
+    }, observerOptions);
+
+    if (headerRef.current) headerObserver.observe(headerRef.current);
+    if (contentRef.current) contentObserver.observe(contentRef.current);
+    if (projectRef.current) projectObserver.observe(projectRef.current);
+
+    return () => {
+      headerObserver.disconnect();
+      contentObserver.disconnect();
+      projectObserver.disconnect();
+    };
+  }, []);
 
   return (
-    <section className="py-20 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-6">
-        {/* Portfolio Header */}
-        <div className="text-center mb-16">
-          <h2 className="text-8xl font-bold md:text-9xl font-bold mb-8">
+    <div className="min-h-screen relative overflow-hidden ">
+      {/* Architectural Grid Lines - Bold and Structural */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Major Vertical Grid Lines */}
+        <div className="absolute left-0 top-0 h-full w-0.5 bg-gray-400 opacity-80"></div>
+        <div className="absolute left-1/6 top-0 h-full w-px bg-gray-300 opacity-60"></div>
+        <div className="absolute left-1/4 top-0 h-full w-0.5 bg-gray-400 opacity-70"></div>
+        <div className="absolute left-5/6 top-0 h-full w-px bg-gray-300 opacity-60"></div>
+        <div className="absolute right-0 top-0 h-full w-0.5 bg-gray-400 opacity-80"></div>
+        
+   
+        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-400 opacity-80"></div>
+        <div className="absolute top-2/3 left-0 w-full h-0.5 bg-gray-400 opacity-70"></div>
+        <div className="absolute bottom-32 left-0 w-full h-px bg-gray-300 opacity-60"></div>
+        <div className="absolute bottom-16 left-0 w-full h-px bg-gray-300 opacity-50"></div>
+        <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gray-400 opacity-80"></div>
+        
+        {/* Additional Fine Grid Lines */}
+        <div className="absolute top-20 left-0 w-full h-px bg-gray-200 opacity-40"></div>
+        <div className="absolute top-28 left-0 w-full h-px bg-gray-200 opacity-40"></div>
+        <div className="absolute top-36 left-0 w-full h-px bg-gray-200 opacity-40"></div>
+        <div className="absolute top-44 left-0 w-full h-px bg-gray-200 opacity-40"></div>
+        
+        {/* Vertical Fine Lines */}
+        <div className="absolute left-8 top-0 h-full w-px bg-gray-200 opacity-30"></div>
+        <div className="absolute left-16 top-0 h-full w-px bg-gray-200 opacity-30"></div>
+        <div className="absolute right-8 top-0 h-full w-px bg-gray-200 opacity-30"></div>
+        <div className="absolute right-16 top-0 h-full w-px bg-gray-200 opacity-30"></div>
+      </div>
+
+      {/* Header with EXPO and phone number */}
+      <div className="relative z-10 flex justify-between items-center p-6 text-sm text-gray-700 font-medium">
+        <div className="hover:text-black transition-colors duration-300 cursor-pointer">EXPO</div>
+        <div className="hover:text-black transition-colors duration-300 cursor-pointer">+48 61 642 7167</div>
+      </div>
+
+      {/* Main content */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6">
+        {/* Large portfolio heading with animation */}
+        <div 
+          ref={headerRef}
+          className={`text-center mb-12 mt-8 transition-all duration-1000 transform ${
+            headerVisible ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'
+          }`}
+        >
+          <h1 className="text-[6rem] md:text-[10rem] lg:text-[14rem] font-black leading-[0.8] tracking-[-0.02em] bg-gradient-to-r from-black via-gray-800 to-black bg-clip-text text-transparent hover:scale-105 transition-transform duration-700 cursor-default">
             portfolio
-            {/* <span className="text-8xl">/</span> */}
-          </h2>
-          <div className="max-w-3xl mx-auto">
-            <p className="text-gray-700 text-lg leading-relaxed mb-4">
-              Kreujemy przestrzeń od prawie 18 lat - projektując i budując stoiska targowe na całym świecie. Nasi 
-              projektanci przenoszą nawet najbardziej szalone pomysły ze sfery marzeń do rzeczywistości. Dzięki 
-              własnej stolarni i produkcji nie musisz tracić czasu i szukać różnych podwykonawców do realizacji
-            </p>
-            <button className="text-black hover:text-gray-600 transition-colors">
-              rozwiń <span className="ml-1">▼</span>
-            </button>
-          </div>
+          </h1>
         </div>
 
-        {/* Project Showcase */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
-          <div className="bg-black text-white p-8">
-            <h3 className="text-3xl font-light mb-6">Wiśniowski</h3>
-            <div className="space-y-2 text-sm">
-              <p>stoisko targowe</p>
-              <p>Monachium</p>
-              <p>BAU 2023</p>
-              <p>527 m2</p>
-            </div>
-          </div>
-          <div 
-            className="h-80 lg:h-auto bg-cover bg-center"
-            style={{
-              backgroundImage: 'url("https://images.pexels.com/photos/1708912/pexels-photo-1708912.jpeg")',
-            }}
-          ></div>
-        </div>
-
-        {/* Main Portfolio Image */}
-        <div className="relative mb-12">
-          <div 
-            className="h-96 md:h-[600px] bg-cover bg-center rounded-lg"
-            style={{
-              backgroundImage: 'url("https://images.pexels.com/photos/716276/pexels-photo-716276.jpeg")',
-            }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent rounded-lg"></div>
-          </div>
+        {/* Description section with animation */}
+        <div 
+          ref={contentRef}
+          className={`max-w-2xl mx-auto text-center mb-16 transition-all duration-800 transform ${
+            contentVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+          }`}
+        >
+          <p className="text-gray-700 text-base leading-relaxed mb-6 font-light">
+            We have been creating space for almost 18 years - designing and building trade fair stands around the 
+            world. Our designers take even the craziest ideas from the realm of dreams to reality. Thanks to your 
+            own carpentry shop and production, you don't have to waste time and look for various subcontractors to 
+            implement
+          </p>
           
-          {/* Navigation */}
-          <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-white rounded-full px-6 py-3 flex items-center space-x-4">
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <span className="text-black font-medium">Zobacz portfolio</span>
-            <div className="text-right">
-              <div className="text-2xl font-bold">1</div>
-              <div className="text-sm text-gray-500">8</div>
+          <button 
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="group inline-flex items-center text-black hover:text-gray-600 transition-all duration-300 text-sm font-medium"
+          >
+            <span className="border-b border-black group-hover:border-gray-600 transition-colors duration-300">
+              expand
+            </span>
+            <span className={`ml-3 transition-transform duration-300 ${
+              isExpanded ? 'rotate-180' : ''
+            }`}>
+              ▼
+            </span>
+          </button>
+        </div>
+
+        {/* Project showcase with enhanced animation */}
+        <div 
+          ref={projectRef}
+          className={`transition-all duration-1000 transform ${
+            projectVisible ? 'translate-y-0 opacity-100' : 'translate-y-16 opacity-0'
+          }`}
+        >
+          <div 
+            className="grid grid-cols-12 gap-0 mb-12 group cursor-pointer overflow-hidden bg-white shadow-lg hover:shadow-xl transition-all duration-500 border border-gray-200"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            {/* Left info panel with professional styling */}
+            <div className="col-span-12 lg:col-span-3 bg-black text-white p-8 lg:p-12 relative">
+              <div className="relative z-10 h-full flex flex-col justify-center">
+                <h2 className={`text-3xl lg:text-4xl font-light mb-8 text-white transition-all duration-300 ${
+                  isHovered ? 'transform translate-x-1' : ''
+                }`}>
+                  Wiśniowski
+                </h2>
+                <div className="space-y-2 text-sm lg:text-base text-gray-300">
+                  <p className="font-medium">fair stand</p>
+                  <p>Munich</p>
+                  <p>BAU 2023</p>
+                  <p className="text-white font-semibold text-lg">527 m²</p>
+                </div>
+              </div>
             </div>
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <ChevronRight className="w-5 h-5" />
-            </button>
+            
+            {/* Right image with professional styling - Much larger */}
+            <div className="col-span-12 lg:col-span-9 relative overflow-hidden">
+              <div 
+                className={`h-80 lg:h-[600px] xl:h-[700px] bg-cover bg-center transition-all duration-700 transform ${
+                  isHovered ? 'scale-105' : 'scale-100'
+                }`}
+                style={{
+                  backgroundImage: 'url("https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80")',
+                }}
+              />
+              {/* Subtle overlay */}
+              <div className={`absolute inset-0 bg-black transition-opacity duration-300 ${
+                isHovered ? 'opacity-10' : 'opacity-0'
+              }`} />
+            </div>
           </div>
         </div>
 
-        {/* Animated Statistics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          {stats.map((stat, index) => (
-            <AnimatedStat
-              key={index}
-              value={stat.value}
-              label={stat.label}
-              duration={stat.duration}
-            />
-          ))}
+        {/* Bottom navigation with animation */}
+        <div className={`text-center mb-12 transition-all duration-1000 transform ${
+          projectVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+        }`}>
+          <div className="inline-flex items-center space-x-8 bg-white px-8 py-4 shadow-sm hover:shadow-md transition-all duration-300 border border-gray-200">
+            <button className="text-gray-600 hover:text-black transition-colors duration-300 text-lg">
+              ←
+            </button>
+            <span className="text-base font-medium text-gray-700">See portfolio</span>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-black">1</div>
+              <div className="text-xs text-gray-500 leading-none">8</div>
+            </div>
+            <button className="text-gray-600 hover:text-black transition-colors duration-300 text-lg">
+              →
+            </button>
+          </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 
