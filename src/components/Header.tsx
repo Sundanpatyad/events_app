@@ -47,10 +47,14 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <div className="flex gap-2 items-center">
-             <img src={logo} alt=""  height={50} width={50}/>
+          <div className="flex gap-4 items-center">
+             <img src={logo} alt=""  height={80} width={80}/>
             <div className={isDarkBackground ? 'text-white' : 'text-black'}>
-              <div className="text-sm font-light uppercase tracking-wider">Nakashi Expo Innovation </div>
+            <div className="text-sm font-light tracking-[0.2em] leading-tight">
+                  <div>Nakashi</div>
+                  <div>EXPO</div>
+                  <div>INNOVATION</div>
+                </div>
             </div>
           </div>
 

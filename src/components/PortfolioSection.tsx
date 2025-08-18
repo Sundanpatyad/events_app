@@ -113,7 +113,8 @@ const PortfolioSection = () => {
         {/* Portfolio Header */}
         <div className="text-center mb-16">
           <h2 className="text-8xl font-bold md:text-9xl font-bold mb-8">
-            portfolio<span className="text-8xl">/</span>
+            portfolio
+            {/* <span className="text-8xl">/</span> */}
           </h2>
           <div className="max-w-3xl mx-auto">
             <p className="text-gray-700 text-lg leading-relaxed mb-4">
