@@ -38,7 +38,7 @@ const FullScreenMenu: React.FC<FullScreenMenuProps> = ({ isOpen, onClose }) => {
             </li>
             <li>
               <a 
-                href="#portfolio"
+                href="/portfolio"
                 className="text-white text-4xl md:text-6xl font-light hover:text-gray-300 transition-colors block"
                 onClick={onClose}
               >
