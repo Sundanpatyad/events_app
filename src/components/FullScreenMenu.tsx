@@ -7,6 +7,20 @@ interface FullScreenMenuProps {
 }
 
 const FullScreenMenu: React.FC<FullScreenMenuProps> = ({ isOpen, onClose }) => {
+  const menuItems = [
+    { id: 1, title: "Home", path: "/" },
+    { id: 2, title: "About US", path: "/about" },
+    { id: 3, title: "Events Portfolio", path: "/portfolio" },
+    { id: 4, title: "Exhibitions Portfolio", path: "/exhibitions-portfolio" },
+    { id: 5, title: "Technology", path: "/technology" },
+    { id: 6, title: "Designed & Delivered", path: "/designed-delivered" },
+    { id: 7, title: "AI Concept Gallery", path: "/ai-concept-gallery" },
+    { id: 8, title: "Upcoming Shows", path: "/upcoming-shows" },
+    { id: 9, title: "Contact Us", path: "/contact" },
+    { id: 10, title: "Google and Social Media Reviews", path: "/reviews" },
+    { id: 11, title: "Career", path: "/career" }
+  ];
+
   return (
     <div 
       className={`fixed inset-0 z-50 bg-black transition-opacity duration-700 ease-in-out ${
@@ -19,6 +33,7 @@ const FullScreenMenu: React.FC<FullScreenMenuProps> = ({ isOpen, onClose }) => {
       <button
         onClick={onClose}
         className="absolute top-8 right-8 text-white hover:text-gray-300 transition-colors z-10"
+        aria-label="Close menu"
       >
         <X className="w-8 h-8" />
       </button>
@@ -26,52 +41,18 @@ const FullScreenMenu: React.FC<FullScreenMenuProps> = ({ isOpen, onClose }) => {
       {/* Menu Content */}
       <div className="flex items-center justify-center h-full">
         <nav className="text-center">
-          <ul className="space-y-8">
-            <li>
-              <a 
-                href="#home"
-                className="text-white text-4xl md:text-6xl font-light hover:text-gray-300 transition-colors block"
-                onClick={onClose}
-              >
-                Home
-              </a>
-            </li>
-            <li>
-              <a 
-                href="/portfolio"
-                className="text-white text-4xl md:text-6xl font-light hover:text-gray-300 transition-colors block"
-                onClick={onClose}
-              >
-                Portfolio
-              </a>
-            </li>
-            <li>
-              <a 
-                href="#oferta"
-                className="text-white text-4xl md:text-6xl font-light hover:text-gray-300 transition-colors block"
-                onClick={onClose}
-              >
-                Oferta
-              </a>
-            </li>
-            <li>
-              <a 
-                href="#about"
-                className="text-white text-4xl md:text-6xl font-light hover:text-gray-300 transition-colors block"
-                onClick={onClose}
-              >
-                O nas
-              </a>
-            </li>
-            <li>
-              <a 
-                href="#contact"
-                className="text-white text-4xl md:text-6xl font-light hover:text-gray-300 transition-colors block"
-                onClick={onClose}
-              >
-                Kontakt
-              </a>
-            </li>
+          <ul className="space-y-6">
+            {menuItems.map((item) => (
+              <li key={item.id}>
+                <a 
+                  href={item.path}
+                  className="text-white text-2xl md:text-4xl font-light hover:text-gray-300 transition-colors block"
+                  onClick={onClose}
+                >
+                  {item.title}
+                </a>
+              </li>
+            ))}
           </ul>
 
           {/* Contact Info */}
@@ -83,10 +64,10 @@ const FullScreenMenu: React.FC<FullScreenMenuProps> = ({ isOpen, onClose }) => {
             
             {/* Languages */}
             <div className="flex justify-center space-x-6 text-sm mt-8">
-              <span className="hover:text-gray-300 cursor-pointer transition-colors">EN</span>
-              <span className="hover:text-gray-300 cursor-pointer transition-colors">DE</span>
-              <span className="hover:text-gray-300 cursor-pointer transition-colors">ZH</span>
-              <span className="hover:text-gray-300 cursor-pointer transition-colors">KO</span>
+              <button className="hover:text-gray-300 cursor-pointer transition-colors">EN</button>
+              <button className="hover:text-gray-300 cursor-pointer transition-colors">DE</button>
+              <button className="hover:text-gray-300 cursor-pointer transition-colors">ZH</button>
+              <button className="hover:text-gray-300 cursor-pointer transition-colors">KO</button>
             </div>
           </div>
         </nav>

@@ -10,7 +10,7 @@ import ContactForm from '../components/Comment'
 function Home() {
   return (
     <div className="min-h-screen bg-gray-100">
-    <Header />
+  
     <div id="home">
       <HeroSection />
     </div>
