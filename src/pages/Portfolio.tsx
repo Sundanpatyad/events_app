@@ -1,4 +1,6 @@
 import React from 'react';
+import Footer from '../components/Footer';
+import ContactForm from '../components/Comment';
 
 const PortfolioUI = () => {
   const portfolioProjects = [
@@ -155,7 +157,7 @@ const PortfolioUI = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 mt-20">
       {/* Header */}
       <div className="flex justify-between items-center px-8 py-6">
         <div className="text-sm font-medium text-gray-600">EXPO</div>
@@ -190,6 +192,8 @@ const PortfolioUI = () => {
           ))}
         </div>
       </div>
+      {/* <ContactForm /> */}
+      <Footer />
     </div>
   );
 };

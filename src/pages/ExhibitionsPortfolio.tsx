@@ -1,4 +1,6 @@
 import React from 'react';
+import ContactForm from '../components/Comment';
+import Footer from '../components/Footer';
 
 const ExhibitionPortfolioUI = () => {
   const exhibitionProjects = [
@@ -155,7 +157,7 @@ const ExhibitionPortfolioUI = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 relative overflow-hidden">
+    <div className="min-h-screen bg-gray-50 mt-20 relative overflow-hidden">
       {/* Background Grid Lines */}
       <div className="absolute inset-0 opacity-30">
         <svg
@@ -220,6 +222,8 @@ const ExhibitionPortfolioUI = () => {
           </div>
         </div>
       </div>
+      {/* <ContactForm /> */}
+      <Footer />
     </div>
   );
 };
