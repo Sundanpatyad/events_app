@@ -395,7 +395,7 @@ const HeroSection = () => {
           </motion.p>
         </motion.div>
         
-        <Social isDarkBackground={true}/>
+    
         
         {/* Scroll Indicator */}
         <motion.div 
