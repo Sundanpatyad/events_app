@@ -5,6 +5,7 @@ import ExhibitionsPortfolio from './pages/ExhibitionsPortfolio';
 import Team from './pages/Team';
 import Header from './components/Header';
 import ContactUs from './pages/Contact-us';
+import {About} from './pages/About';
 
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
         <Header />
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/exhibitions-portfolio" element={<ExhibitionsPortfolio />} />
           <Route path="/team" element={<Team />} />

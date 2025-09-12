@@ -5,6 +5,7 @@ import AboutSection from '../components/AboutSection'
 import OfertaSection from '../components/OfertaSection'
 import TestimonialsSection from '../components/Review'
 import ContactForm from '../components/Comment'
+import OurVisionSection from '../components/OurMission'
 
 function Home() {
   return (
@@ -19,11 +20,15 @@ function Home() {
     <div id="about">
       <AboutSection />
     </div>
+ 
     <div id="oferta">
       <OfertaSection />
     </div>
     <div id="review">
       <TestimonialsSection />
+    </div>
+    <div id="vision">
+      <OurVisionSection />
     </div>
     <div id="comment">
       <ContactForm />

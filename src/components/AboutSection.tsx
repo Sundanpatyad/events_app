@@ -197,12 +197,12 @@ const CardShowcase = () => {
                 : 'translate-y-8 opacity-0'
             }`}
           >
-            {/* Floating Counter */}
+            {/* Floating Counter
             <div className="mb-6">
               <span className="text-[12rem] font-black text-gray-200 leading-none select-none">
                 04
               </span>
-            </div>
+            </div> */}
 
             <div className="max-w-4xl mx-auto">
               <h1 className="text-6xl md:text-8xl font-black leading-[0.9] mb-8">
