@@ -20,58 +20,58 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 exports.updateMobileNumber = async (req, res) => {
     try {
         const userId = req.user.id;
-      const { mobileNumber } = req.body;
-  
-      if (!userId || !mobileNumber) {
-        return res.status(400).json({
-          success: false,
-          message: 'User ID and mobile number are required'
-        });
-      }
-  
-      // Check if the mobile number is already in use
-      const existingUser = await User.findOne({ mobileNumber });
-      if (existingUser && existingUser._id.toString() !== userId) {
-        return res.status(400).json({
-          success: false,
-          message: 'Mobile number is already in use by another user'
-        });
-      }
-  
-      // Update the user's mobile number
-      const updatedUser = await User.findByIdAndUpdate(
-        userId,
-        { mobileNumber },
-        { new: true, runValidators: true }
-      );
-  
-      if (!updatedUser) {
-        return res.status(404).json({
-          success: false,
-          message: 'User not found'
-        });
-      }
-  
-      res.status(200).json({
-        success: true,
-        message: 'Mobile number updated successfully',
-        user: {
-          _id: updatedUser._id,
-          firstName: updatedUser.firstName,
-          lastName: updatedUser.lastName,
-          email: updatedUser.email,
-          mobileNumber: updatedUser.mobileNumber
+        const { mobileNumber } = req.body;
+
+        if (!userId || !mobileNumber) {
+            return res.status(400).json({
+                success: false,
+                message: 'User ID and mobile number are required'
+            });
         }
-      });
+
+        // Check if the mobile number is already in use
+        const existingUser = await User.findOne({ mobileNumber });
+        if (existingUser && existingUser._id.toString() !== userId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Mobile number is already in use by another user'
+            });
+        }
+
+        // Update the user's mobile number
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { mobileNumber },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Mobile number updated successfully',
+            user: {
+                _id: updatedUser._id,
+                firstName: updatedUser.firstName,
+                lastName: updatedUser.lastName,
+                email: updatedUser.email,
+                mobileNumber: updatedUser.mobileNumber
+            }
+        });
     } catch (error) {
-      console.error('Error updating mobile number:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error updating mobile number',
-        error: error.message
-      });
+        console.error('Error updating mobile number:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating mobile number',
+            error: error.message
+        });
     }
-  };
+};
 
 // ================ SEND-OTP For Email Verification ================
 exports.sendOTP = async (req, res) => {
@@ -136,10 +136,10 @@ exports.signup = async (req, res) => {
     try {
         // extract data 
         const { firstName, lastName, email, password, confirmPassword,
-            accountType, contactNumber, otp  } = req.body;
+            accountType, contactNumber } = req.body;
 
         // validation
-        if (!firstName || !lastName || !email || !password || !confirmPassword || !accountType || !otp) {
+        if (!firstName || !lastName || !email || !password || !confirmPassword || !accountType) {
             return res.status(401).json({
                 success: false,
                 message: 'All fields are required..!'
@@ -165,37 +165,12 @@ exports.signup = async (req, res) => {
             });
         }
 
-        // find most recent otp stored for user in DB
-        const recentOtp = await OTP.findOne({ email }).sort({ createdAt: -1 }).limit(1);
-        //console.log('recentOtp ', recentOtp)
-
-        // .sort({ createdAt: -1 }): 
-        // It's used to sort the results based on the createdAt field in descending order (-1 means descending). 
-        // This way, the most recently created OTP will be returned first.
-
-        // .limit(1): It limits the number of documents returned to 1. 
-
-
-        // if otp not found
-        if (!recentOtp || recentOtp.length == 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'Otp not found in DB, please try again'
-            });
-        } else if (otp !== recentOtp.otp) {
-            // otp invalid
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid Otp'
-            })
-        }
-
         // hash - secure passoword
         let hashedPassword = await bcrypt.hash(password, 10);
 
         // additionDetails
         const profileDetails = await Profile.create({
-            gender: null, dateOfBirth: null, about: null, contactNumber: null , mobileNumber :null
+            gender: null, dateOfBirth: null, about: null, contactNumber: null, mobileNumber: null
         });
 
         let approved = "";
@@ -205,14 +180,20 @@ exports.signup = async (req, res) => {
         const userData = await User.create({
             firstName, lastName, email, password: hashedPassword, contactNumber,
             accountType: accountType, additionalDetails: profileDetails._id,
-            approved: approved, mobileNumber:null,
+            approved: approved, mobileNumber: null,
             image: `https://api.dicebear.com/5.x/initials/svg?seed=${firstName} ${lastName}`
         });
 
         // return success message
         res.status(200).json({
             success: true,
-            message: 'User Registered Successfully'
+            message: 'User Registered Successfully',
+            user: {
+                firstName: userData.firstName,
+                lastName: userData.lastName,
+                email: userData.email,
+                accountType: userData.accountType
+            }
         });
     }
 
@@ -262,9 +243,9 @@ exports.login = async (req, res) => {
 
             // Generate token 
             const token = jwt.sign(payload, process.env.JWT_SECRET, {
-                expiresIn: "365d", // 1 year
-              });
-              
+                expiresIn: "5d", // 5 days
+            });
+
 
             user = user.toObject();
             user.token = token;
@@ -273,10 +254,10 @@ exports.login = async (req, res) => {
 
             // cookie
             const cookieOptions = {
-                expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
+                expires: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days
                 httpOnly: true
             }
-            
+
 
             res.cookie('token', token, cookieOptions).status(200).json({
                 success: true,
@@ -396,25 +377,51 @@ exports.changePassword = async (req, res) => {
 
 exports.googleAuth = async (req, res) => {
     try {
-        const { token } = req.body;
-        const ticket = await client.verifyIdToken({
-            idToken: token,
-            audience: process.env.GOOGLE_CLIENT_ID,
-        });
-        const { name, email, picture } = ticket.getPayload();
+        const { accessToken } = req.body;
 
+        if (!accessToken) {
+            return res.status(400).json({
+                success: false,
+                message: 'Access token is required'
+            });
+        }
+
+        // Fetch user info from Google using access token
+        const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: {
+                Authorization: `Bearer ${accessToken}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch user info from Google');
+        }
+
+        const googleUser = await response.json();
+        const { name, email, picture } = googleUser;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email not provided by Google'
+            });
+        }
+
+        // Check if user exists
         let user = await User.findOne({ email }).populate('additionalDetails');
 
+        // If user doesn't exist, create new user
         if (!user) {
             const profileDetails = await Profile.create({
                 gender: null,
                 dateOfBirth: null,
                 about: null,
                 contactNumber: null,
+                mobileNumber: null
             });
 
             const [firstName, ...lastNameParts] = name.split(' ');
-            const lastName = lastNameParts.join(' ');
+            const lastName = lastNameParts.join(' ') || '';
 
             user = await User.create({
                 firstName,
@@ -423,10 +430,15 @@ exports.googleAuth = async (req, res) => {
                 accountType: "Student",
                 additionalDetails: profileDetails._id,
                 approved: true,
-                image: picture,
+                image: picture || `https://api.dicebear.com/5.x/initials/svg?seed=${firstName} ${lastName}`,
+                mobileNumber: null
             });
+
+            // Populate additionalDetails for new user
+            user = await User.findById(user._id).populate('additionalDetails');
         }
 
+        // Create JWT token
         const payload = {
             email: user.email,
             id: user._id,
@@ -434,7 +446,7 @@ exports.googleAuth = async (req, res) => {
         };
 
         const jwtToken = jwt.sign(payload, process.env.JWT_SECRET, {
-            expiresIn: "365d",
+            expiresIn: "5d", // 5 days
         });
 
         user = user.toObject();
@@ -442,7 +454,7 @@ exports.googleAuth = async (req, res) => {
         user.password = undefined;
 
         const cookieOptions = {
-            expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 5 days
+            expires: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days
             httpOnly: true,
         };
 
@@ -453,7 +465,7 @@ exports.googleAuth = async (req, res) => {
             message: 'User logged in successfully with Google',
         });
     } catch (error) {
-        //console.log('Error in Google Authentication', error);
+        console.error('Error in Google Authentication:', error);
         res.status(500).json({
             success: false,
             error: error.message,
