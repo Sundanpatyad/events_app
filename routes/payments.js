@@ -16,7 +16,7 @@ const mockTestPurchasersController = require('../controllers/paymentList');
 router.post('/capturePayment', auth, isStudent, capturePayment);
 
 // Mock test payment routes
-router.post('/captureMockPaymet', auth, isStudent, captureMockTestPayment);
+router.post('/captureMockPayment', auth, isStudent, captureMockTestPayment);
 router.post('/verifyMockPayment', auth, isStudent, verifyMockPayment);
 router.get('/paymentStatus/:orderId', auth, getPaymentStatus);
 
