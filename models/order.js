@@ -21,6 +21,10 @@ const orderSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
+    razorpayPaymentId: {
+        type: String,
+        sparse: true  // Allows null values while maintaining uniqueness for non-null values
+    },
     idempotencyKey: {
         type: String,
         required: true,
@@ -28,13 +32,31 @@ const orderSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['created', 'paid', 'failed'],
+        enum: ['created', 'authorized', 'paid', 'failed', 'pending', 'refunded'],
         default: 'created'
+    },
+    metadata: {
+        type: Object,
+        default: {}
+    },
+    refundId: {
+        type: String,
+        sparse: true
+    },
+    refundAmount: {
+        type: Number,
+        default: 0
     },
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now
     }
+}, {
+    timestamps: true
 });
 
 const Order = mongoose.model('Order', orderSchema);

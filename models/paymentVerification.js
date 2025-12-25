@@ -9,53 +9,68 @@ const paymentVerificationSchema = new mongoose.Schema({
     razorpayOrderId: {
         type: String,
         required: true,
-        unique: true
+        index: true
     },
     razorpayPaymentId: {
         type: String,
         required: true,
-        unique: true
+        index: true
+    },
+    razorpaySignature: {
+        type: String,
+        required: false
+    },
+    webhookEventId: {
+        type: String,
+        unique: true,
+        sparse: true  // For webhook idempotency
     },
     mockTestIds: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'MockTestSeries',
-        default: []  // Added default empty array for failed payments
+        default: []
     }],
     amount: {
         type: Number,
-        required: false  // Optional since failed payments might not have amount
+        required: false
     },
     status: {
         type: String,
         required: true,
-        enum: ['completed', 'failed'],
+        enum: ['authorized', 'completed', 'failed', 'pending', 'refunded'],
         default: 'completed'
     },
     paymentMethod: {
         type: String,
-        required: false  // Optional since failed payments might not have method
+        required: false
     },
     failureReason: {
         type: String,
         required: false
     },
+    metadata: {
+        type: Object,
+        default: {}
+    },
+    refundId: {
+        type: String,
+        sparse: true
+    },
+    refundAmount: {
+        type: Number,
+        default: 0
+    },
     webhookProcessedAt: {
         type: Date,
-        required: true
+        required: false
     },
     createdAt: {
         type: Date,
         default: Date.now
     }
 }, {
-    timestamps: true  // Adds updatedAt and createdAt fields automatically
+    timestamps: true
 });
-
-// Index for faster queries
-paymentVerificationSchema.index({ razorpayOrderId: 1 });
-paymentVerificationSchema.index({ razorpayPaymentId: 1 });
-paymentVerificationSchema.index({ userId: 1 });
-paymentVerificationSchema.index({ status: 1 });
 
 const PaymentVerification = mongoose.model('PaymentVerification', paymentVerificationSchema);
 
