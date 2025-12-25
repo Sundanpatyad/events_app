@@ -9,7 +9,8 @@ const MockTestSeriesSchema = new mongoose.Schema({
     type: String
   },
   attachments: [
-    { name:{type:String},
+    {
+      name: { type: String },
       questionPaper: { type: String },
       answerKey: { type: String },
       omrSheet: { type: String },
@@ -27,7 +28,7 @@ const MockTestSeriesSchema = new mongoose.Schema({
         }
       ],
       duration: { type: Number, required: true },
-      negative:{type : Number , default:0},
+      negative: { type: Number, default: 0 },
       price: { type: Number },
       status: { type: String, enum: ['published', 'draft'], default: 'published' },
       studentsEnrolled: [
@@ -58,7 +59,7 @@ const MockTestSeriesSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['published', 'draft'],
-    default: 'published'
+    default: 'draft'
   },
   studentsEnrolled: [
     {
