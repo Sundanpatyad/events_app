@@ -105,14 +105,39 @@ exports.updateMockTestSeries = async (req, res) => {
         if (status !== undefined) updateData.status = status;
         if (attachments !== undefined) updateData.attachments = attachments;
 
-        // Handle mockTests with negative marking
+        // Handle mockTests with negative marking and question types
         if (mockTests !== undefined) {
-            // Ensure each mock test has negative marking field
-            updateData.mockTests = mockTests.map(test => ({
-                ...test,
-                negative: test.negative !== undefined ? test.negative : 0, // Default to 0 if not provided
-                updatedAt: new Date()
-            }));
+            // Process each mock test and its questions
+            updateData.mockTests = mockTests.map(test => {
+                // Process questions to ensure proper structure
+                const processedQuestions = test.questions?.map(question => {
+                    const processedQuestion = {
+                        text: question.text,
+                        questionType: question.questionType || 'MCQ',
+                        options: question.options,
+                        correctAnswer: question.correctAnswer
+                    };
+
+                    // Add leftColumn and rightColumn for MATCH questions
+                    if (question.questionType === 'MATCH') {
+                        if (question.leftColumn) processedQuestion.leftColumn = question.leftColumn;
+                        if (question.rightColumn) processedQuestion.rightColumn = question.rightColumn;
+                    }
+
+                    // Add optional fields if provided
+                    if (question.explanation) processedQuestion.explanation = question.explanation;
+                    if (question.marks !== undefined) processedQuestion.marks = question.marks;
+
+                    return processedQuestion;
+                }) || [];
+
+                return {
+                    ...test,
+                    questions: processedQuestions,
+                    negative: test.negative !== undefined ? test.negative : 0,
+                    updatedAt: new Date()
+                };
+            });
 
             // Update total tests count
             updateData.totalTests = mockTests.length + (attachments?.length || existingSeries.attachments?.length || 0);

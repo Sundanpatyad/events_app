@@ -22,9 +22,24 @@ const MockTestSeriesSchema = new mongoose.Schema({
       testName: { type: String, required: true },
       questions: [
         {
-          text: { type: String, required: true },
-          options: [{ type: String, required: true }],
-          correctAnswer: { type: String, required: true },
+          text: { type: String, required: true }, // Main question text
+          questionType: {
+            type: String,
+            enum: ['MCQ', 'MATCH', 'STATEMENT'],
+            default: 'MCQ'
+          }, // Question type
+
+          // For Match the Following questions
+          leftColumn: [{ type: String }], // Left side items (a, b, c, d)
+          rightColumn: [{ type: String }], // Right side items (1, 2, 3, 4)
+
+          // For all question types
+          options: [{ type: String, required: true }], // Answer options
+          correctAnswer: { type: String, required: true }, // Correct answer
+
+          // Optional fields
+          explanation: { type: String }, // Explanation for the answer
+          marks: { type: Number, default: 1 }, // Marks for this question
         }
       ],
       duration: { type: Number, required: true },
