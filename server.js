@@ -14,25 +14,47 @@ const paymentRoutes = require('./routes/payments');
 const courseRoutes = require('./routes/course');
 const mockRoutes = require("./routes/mocktest");
 const chatRoutes = require("./routes/chatRoutes");
-const admin = require("./routes/adminRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 const materialRoutes = require('./routes/studyMaterialsRoutes');
 
 const app = express();
 
-// Middleware
-app.use(express.json());
+/* =========================
+   GLOBAL MIDDLEWARE
+========================= */
+
+// 🔥 IMPORTANT: increase payload limits (DigitalOcean App Platform)
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ limit: '15mb', extended: true }));
+
 app.use(cookieParser());
-app.use(cors());
-app.use(fileUpload({
-    useTempFiles: true,
-    tempFileDir: '/tmp'
+
+// CORS (safe for prod + auth)
+app.use(cors({
+  origin: true,
+  credentials: true,
 }));
 
-// Connections
+// File uploads
+app.use(fileUpload({
+  useTempFiles: true,
+  tempFileDir: '/tmp',
+  limits: {
+    fileSize: 15 * 1024 * 1024, // 15 MB
+  },
+}));
+
+/* =========================
+   DATABASE & SERVICES
+========================= */
+
 connectDB();
 cloudinaryConnect();
 
-// Mount routes
+/* =========================
+   ROUTES
+========================= */
+
 app.use('/api/v1/auth', userRoutes);
 app.use('/api/v1/profile', profileRoutes);
 app.use('/api/v1/payment', paymentRoutes);
@@ -40,19 +62,27 @@ app.use('/api/v1/course', courseRoutes);
 app.use('/api/v1/mock', mockRoutes);
 app.use('/api/v1/chats', chatRoutes);
 app.use('/api/v1/materials', materialRoutes);
-app.use('/api/v1/admin', admin);
+app.use('/api/v1/admin', adminRoutes);
 
-// Default Route
+/* =========================
+   HEALTH / DEFAULT ROUTE
+========================= */
+
 app.get('/', (req, res) => {
-    res.send(`
-    <div>
-        This is Default Route
-        <p>Everything is OK</p>
-    </div>`);
+  res.status(200).send(`
+    <div style="font-family: Arial">
+      <h2>Server is running 🚀</h2>
+      <p>Everything is OK</p>
+    </div>
+  `);
 });
+
+/* =========================
+   SERVER START
+========================= */
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server started on PORT ${PORT}`);
+  console.log(`✅ Server started on port ${PORT}`);
 });
