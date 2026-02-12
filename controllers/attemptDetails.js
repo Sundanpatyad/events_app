@@ -31,9 +31,9 @@ exports.createAttempt = async (req, res) => {
     await newAttempt.save();
 
     await User.findByIdAndUpdate(userId, {
-      $addToSet: { 
+      $addToSet: {
         mocktests: mockId,
-        attempts: newAttempt._id 
+        attempts: newAttempt._id
       }
     });
 
@@ -101,8 +101,8 @@ exports.getAttemptById = async (req, res) => {
   try {
     const { attemptId } = req.params;
     const attempt = await AttemptDetails.findById(attemptId)
-                                        .populate('user', 'firstName lastName email')
-                                        .populate('mockTestSeries', 'seriesName');
+      .populate('user', 'firstName lastName email')
+      .populate('mockTestSeries', 'seriesName');
 
     if (!attempt) {
       return res.status(404).json({
@@ -129,8 +129,8 @@ exports.getAttemptsByMockTest = async (req, res) => {
   try {
     const { mockId } = req.params;
     const attempts = await AttemptDetails.find({ mockTestSeries: mockId })
-                                         .populate('user', 'firstName lastName email')
-                                         .sort({ createdAt: -1 });
+      .populate('user', 'firstName lastName email')
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -152,35 +152,19 @@ exports.getRankings = async (req, res) => {
     const rankings = await AttemptDetails.aggregate([
       // Sort by attemptDate in descending order
       { $sort: { attemptDate: -1 } },
-      
+
       // Group by user and testName to get the latest attempt for each user per test
       {
         $group: {
           _id: { user: '$user', testName: '$testName' },
-          latestAttempt: { $first: '$$ROOT' }
+          score: { $first: '$score' },
+          attemptDate: { $first: '$attemptDate' },
+          user: { $first: '$user' },
+          testName: { $first: '$testName' }
         }
       },
-      
-      // Unwind to flatten the result
-      { $replaceRoot: { newRoot: '$latestAttempt' } },
-      
-      // Sort by score in descending order
-      { $sort: { score: -1 } },
-      
-      // Add rank field
-      {
-        $setWindowFields: {
-          partitionBy: '$testName',
-          sortBy: { score: -1 },
-          output: {
-            rank: {
-              $rank: {}
-            }
-          }
-        }
-      },
-      
-      // Lookup to get user details
+
+      // Lookup to get user details BEFORE ranking (reduces documents)
       {
         $lookup: {
           from: 'users',
@@ -189,14 +173,13 @@ exports.getRankings = async (req, res) => {
           as: 'userDetails'
         }
       },
-      
+
       { $unwind: '$userDetails' },
-      
-      // Project only necessary fields
+
+      // Project early to reduce document size
       {
         $project: {
-          rank: 1,
-          userId: '$user', // Include the user's ID
+          userId: '$user',
           userName: {
             $concat: ['$userDetails.firstName', ' ', '$userDetails.lastName']
           },
@@ -206,8 +189,22 @@ exports.getRankings = async (req, res) => {
           userImage: '$userDetails.image'
         }
       },
-      
-      // Sort by testName and then by rank
+
+      // Sort by score in descending order
+      { $sort: { score: -1 } },
+
+      // Add rank field
+      {
+        $setWindowFields: {
+          partitionBy: '$testName',
+          sortBy: { score: -1 },
+          output: {
+            rank: { $rank: {} }
+          }
+        }
+      },
+
+      // Final sort by testName and rank
       { $sort: { testName: 1, rank: 1 } }
     ]);
 
@@ -219,7 +216,8 @@ exports.getRankings = async (req, res) => {
     console.error('Error in getRankings:', error);
     res.status(500).json({
       success: false,
-      message: 'An error occurred while fetching rankings'
+      message: 'An error occurred while fetching rankings',
+      error: error.message
     });
   }
 };
