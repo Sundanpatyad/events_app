@@ -1,10 +1,32 @@
 const Mocktest = require("../models/mocktest");
 const { MockTestSeries } = require("../models/mockTestSeries");
+const { uploadImageToCloudinary } = require('../utils/imageUploader');
 
 exports.createMockTestSeries = async (req, res) => {
     try {
-        const { seriesName, description, price, mockTests, status } = req.body;
+        console.log("=== CREATE MOCK TEST SERIES API CALLED ===");
+        console.log("req.body:", req.body);
+        console.log("req.files keys:", req.files ? Object.keys(req.files) : 'No files');
+
+        const { seriesName, description, price, status } = req.body;
+
+        let mockTests = req.body.mockTests;
+        if (mockTests && typeof mockTests === 'string') {
+            mockTests = JSON.parse(mockTests);
+        }
+
         const creator = req.user.id;
+
+        let thumbnailUrl = "";
+        const thumbnail = req.files?.thumbnail;
+        if (thumbnail) {
+            console.log("Thumbnail file detected:", thumbnail.name);
+            const thumbnailDetails = await uploadImageToCloudinary(thumbnail, process.env.FOLDER_NAME);
+            console.log("Cloudinary Upload Response:", thumbnailDetails?.secure_url);
+            thumbnailUrl = thumbnailDetails.secure_url;
+        } else {
+            console.log("No thumbnail found in req.files!");
+        }
 
         const newSeries = new MockTestSeries({
             seriesName,
@@ -12,7 +34,8 @@ exports.createMockTestSeries = async (req, res) => {
             price,
             status,
             creator,
-            totalTests: mockTests.length
+            thumbnail: thumbnailUrl,
+            totalTests: mockTests ? mockTests.length : 0
         });
 
         const savedSeries = await newSeries.save();
@@ -85,7 +108,17 @@ exports.getMockTestSeriesById = async (req, res) => {
 
 exports.updateMockTestSeries = async (req, res) => {
     try {
-        const { seriesName, description, price, status, mockTests, attachments } = req.body;
+        console.log("=== UPDATE MOCK TEST SERIES API CALLED ===");
+        console.log("req.body:", req.body);
+        console.log("req.files keys:", req.files ? Object.keys(req.files) : 'No files');
+
+        const { seriesName, description, price, status } = req.body;
+
+        let mockTests = req.body.mockTests;
+        if (mockTests && typeof mockTests === 'string') mockTests = JSON.parse(mockTests);
+
+        let attachments = req.body.attachments;
+        if (attachments && typeof attachments === 'string') attachments = JSON.parse(attachments);
 
         // Find the existing series
         const existingSeries = await MockTestSeries.findById(req.params.id);
@@ -104,6 +137,18 @@ exports.updateMockTestSeries = async (req, res) => {
         if (price !== undefined) updateData.price = price;
         if (status !== undefined) updateData.status = status;
         if (attachments !== undefined) updateData.attachments = attachments;
+
+        if (req.files && req.files.thumbnail) {
+            console.log("Updating thumbnail. File detected:", req.files.thumbnail.name);
+            const thumbnailDetails = await uploadImageToCloudinary(
+                req.files.thumbnail,
+                process.env.FOLDER_NAME
+            );
+            console.log("Cloudinary Upload Response:", thumbnailDetails?.secure_url);
+            updateData.thumbnail = thumbnailDetails.secure_url;
+        } else {
+            console.log("No thumbnail file provided in this update request.");
+        }
 
         // Handle mockTests with negative marking and question types
         if (mockTests !== undefined) {
