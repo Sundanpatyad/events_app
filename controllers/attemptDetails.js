@@ -149,51 +149,45 @@ exports.getAttemptsByMockTest = async (req, res) => {
 
 exports.getRankings = async (req, res) => {
   try {
-    const rankings = await AttemptDetails.aggregate([
-      // Sort by attemptDate in descending order
+    const {
+      testId,    // Filter by mockTestSeries ObjectId
+      testName,  // Filter by testName string
+      page = 1,
+      limit = 10
+    } = req.query;
+
+    const pageNum = Math.max(1, parseInt(page, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
+    const skip = (pageNum - 1) * limitNum;
+
+    // --- Stage 1: Build the initial $match to filter early ---
+    const matchStage = {};
+    if (testId) {
+      matchStage.mockTestSeries = new mongoose.Types.ObjectId(testId);
+    }
+    if (testName) {
+      matchStage.testName = testName;
+    }
+
+    const pipeline = [
+      // Filter early to reduce documents scanned
+      ...(Object.keys(matchStage).length > 0 ? [{ $match: matchStage }] : []),
+
+      // Sort before grouping so $first gives latest attempt
       { $sort: { attemptDate: -1 } },
 
-      // Group by user and testName to get the latest attempt for each user per test
+      // Group by user + testName to get their latest attempt per test
       {
         $group: {
           _id: { user: '$user', testName: '$testName' },
-          score: { $first: '$score' },
+          score:       { $first: '$score' },
           attemptDate: { $first: '$attemptDate' },
-          user: { $first: '$user' },
-          testName: { $first: '$testName' }
+          user:        { $first: '$user' },
+          testName:    { $first: '$testName' }
         }
       },
 
-      // Lookup to get user details BEFORE ranking (reduces documents)
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'user',
-          foreignField: '_id',
-          as: 'userDetails'
-        }
-      },
-
-      { $unwind: '$userDetails' },
-
-      // Project early to reduce document size
-      {
-        $project: {
-          userId: '$user',
-          userName: {
-            $concat: ['$userDetails.firstName', ' ', '$userDetails.lastName']
-          },
-          score: 1,
-          testName: 1,
-          attemptDate: 1,
-          userImage: '$userDetails.image'
-        }
-      },
-
-      // Sort by score in descending order
-      { $sort: { score: -1 } },
-
-      // Add rank field
+      // Assign ranks partitioned by testName, sorted by score desc
       {
         $setWindowFields: {
           partitionBy: '$testName',
@@ -204,13 +198,67 @@ exports.getRankings = async (req, res) => {
         }
       },
 
-      // Final sort by testName and rank
-      { $sort: { testName: 1, rank: 1 } }
-    ]);
+      // Sort by rank ascending so pagination is stable
+      { $sort: { testName: 1, rank: 1 } },
+
+      // Split into metadata (total count) and paginated data
+      {
+        $facet: {
+          metadata: [{ $count: 'total' }],
+          data: [
+            { $skip: skip },
+            { $limit: limitNum },
+
+            // Lookup user details only on the paginated slice
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'user',
+                foreignField: '_id',
+                as: 'userDetails',
+                pipeline: [
+                  { $project: { firstName: 1, lastName: 1, image: 1 } }
+                ]
+              }
+            },
+            { $unwind: { path: '$userDetails', preserveNullAndEmptyArrays: false } },
+
+            // Final projection
+            {
+              $project: {
+                _id: 0,
+                userId:      '$user',
+                userName: {
+                  $concat: ['$userDetails.firstName', ' ', '$userDetails.lastName']
+                },
+                userImage:   '$userDetails.image',
+                score:       1,
+                testName:    1,
+                attemptDate: 1,
+                rank:        1
+              }
+            }
+          ]
+        }
+      }
+    ];
+
+    const [result] = await AttemptDetails.aggregate(pipeline);
+
+    const total = result?.metadata?.[0]?.total ?? 0;
+    const totalPages = Math.ceil(total / limitNum);
 
     res.status(200).json({
       success: true,
-      data: rankings
+      data: result?.data ?? [],
+      pagination: {
+        total,
+        page:       pageNum,
+        limit:      limitNum,
+        totalPages,
+        hasNextPage: pageNum < totalPages,
+        hasPrevPage: pageNum > 1
+      }
     });
   } catch (error) {
     console.error('Error in getRankings:', error);
@@ -223,4 +271,160 @@ exports.getRankings = async (req, res) => {
 };
 
 
+/**
+ * GET /getRankingByName?name=John&testId=...&testName=...
+ * Search rankings for a specific user by their name (partial, case-insensitive).
+ * Optionally filter by testId or testName.
+ */
+exports.getUserRankingByName = async (req, res) => {
+  try {
+    const { name, testId, testName } = req.query;
+
+    if (!name || name.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Query param "name" is required'
+      });
+    }
+
+    const User = require('../models/user');
+
+    // Step 1: Find users whose full name (firstName + lastName) matches the search
+    const nameRegex = new RegExp(name.trim(), 'i');
+    const matchedUsers = await User.find({
+      $or: [
+        { firstName: nameRegex },
+        { lastName:  nameRegex },
+        // match "John Doe" style full-name searches
+        {
+          $expr: {
+            $regexMatch: {
+              input: { $concat: ['$firstName', ' ', '$lastName'] },
+              regex: name.trim(),
+              options: 'i'
+            }
+          }
+        }
+      ]
+    }).select('_id firstName lastName image').lean();
+
+    if (!matchedUsers.length) {
+      return res.status(200).json({
+        success: true,
+        data: [],
+        message: 'No users found matching the given name'
+      });
+    }
+
+    const userIds = matchedUsers.map(u => u._id);
+
+    // Step 2: Build the $match stage for AttemptDetails
+    const matchStage = { user: { $in: userIds } };
+    if (testId) {
+      matchStage.mockTestSeries = new mongoose.Types.ObjectId(testId);
+    }
+    if (testName) {
+      matchStage.testName = testName;
+    }
+
+    // Step 3: Run the rankings pipeline for those users
+    const pipeline = [
+      { $match: matchStage },
+
+      // Sort before grouping so $first gives the latest attempt
+      { $sort: { attemptDate: -1 } },
+
+      // Group by user + testName to get latest attempt per test
+      {
+        $group: {
+          _id: { user: '$user', testName: '$testName' },
+          score:       { $first: '$score' },
+          attemptDate: { $first: '$attemptDate' },
+          user:        { $first: '$user' },
+          testName:    { $first: '$testName' }
+        }
+      },
+
+      // Compute rank within each testName partition
+      {
+        $setWindowFields: {
+          partitionBy: '$testName',
+          sortBy: { score: -1 },
+          output: {
+            rank: { $rank: {} }
+          }
+        }
+      },
+
+      { $sort: { testName: 1, rank: 1 } },
+
+      // Attach user details
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'user',
+          foreignField: '_id',
+          as: 'userDetails',
+          pipeline: [
+            { $project: { firstName: 1, lastName: 1, image: 1 } }
+          ]
+        }
+      },
+      { $unwind: { path: '$userDetails', preserveNullAndEmptyArrays: false } },
+
+      {
+        $project: {
+          _id: 0,
+          userId:      '$user',
+          userName: {
+            $concat: ['$userDetails.firstName', ' ', '$userDetails.lastName']
+          },
+          userImage:   '$userDetails.image',
+          score:       1,
+          testName:    1,
+          attemptDate: 1,
+          rank:        1
+        }
+      }
+    ];
+
+    const results = await AttemptDetails.aggregate(pipeline);
+
+    res.status(200).json({
+      success: true,
+      count: results.length,
+      data: results
+    });
+  } catch (error) {
+    console.error('Error in getUserRankingByName:', error);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while fetching user rankings',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * GET /getAttemptedTestNames
+ * Returns a list of all unique test names that have been attempted by users.
+ * Useful for populating filter dropdowns in the UI.
+ */
+exports.getAllAttemptedTestNames = async (req, res) => {
+  try {
+    const testNames = await AttemptDetails.distinct('testName');
+
+    res.status(200).json({
+      success: true,
+      data: testNames.sort() // Return alphabetically sorted
+    });
+  } catch (error) {
+    console.error('Error in getAllAttemptedTestNames:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve test names',
+      error: error.message
+    });
+  }
+};
 

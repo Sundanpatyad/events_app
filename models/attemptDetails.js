@@ -77,4 +77,9 @@ const attemptDetailsSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Index for filtering by testId (mockTestSeries) + testName + sorting by attemptDate
+attemptDetailsSchema.index({ mockTestSeries: 1, testName: 1, attemptDate: -1 });
+// Index for per-user grouping + sorting
+attemptDetailsSchema.index({ user: 1, testName: 1, attemptDate: -1 });
+
 module.exports = mongoose.model('AttemptDetails', attemptDetailsSchema);
