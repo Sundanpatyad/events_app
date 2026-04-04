@@ -177,21 +177,24 @@ exports.getRankings = async (req, res) => {
       // Sort before grouping so $first gives latest attempt
       { $sort: { attemptDate: -1 } },
 
-      // Group by user + testName to get their latest attempt per test
+      // Group by user + testName + series to get their latest attempt per specific test
       {
         $group: {
-          _id: { user: '$user', testName: '$testName' },
+          _id: { user: '$user', testName: '$testName', mockTestSeries: '$mockTestSeries' },
           score: { $first: '$score' },
           attemptDate: { $first: '$attemptDate' },
           user: { $first: '$user' },
-          testName: { $first: '$testName' }
+          testName: { $first: '$testName' },
+          mockTestSeries: { $first: '$mockTestSeries' },
+          totalQuestions: { $first: '$totalQuestions' },
+          timeTaken: { $first: '$timeTaken' }
         }
       },
 
-      // Assign ranks partitioned by testName, sorted by score desc
+      // Assign ranks partitioned by (testName + series), sorted by score desc
       {
         $setWindowFields: {
-          partitionBy: '$testName',
+          partitionBy: { testName: '$testName', mockTestSeries: '$mockTestSeries' },
           sortBy: { score: -1 },
           output: {
             rank: { $rank: {} }
@@ -218,6 +221,18 @@ exports.getRankings = async (req, res) => {
               }
             },
             { $unwind: { path: '$userDetails', preserveNullAndEmptyArrays: false } },
+
+            // Lookup series details to get seriesName
+            {
+              $lookup: {
+                from: 'mocktestseries',
+                localField: 'mockTestSeries',
+                foreignField: '_id',
+                as: 'seriesDetails'
+              }
+            },
+            { $unwind: { path: '$seriesDetails', preserveNullAndEmptyArrays: true } },
+
             {
               $project: {
                 _id: 0,
@@ -228,8 +243,12 @@ exports.getRankings = async (req, res) => {
                 userImage: '$userDetails.image',
                 score: 1,
                 testName: 1,
+                seriesName: '$seriesDetails.seriesName',
                 attemptDate: 1,
-                rank: 1
+                rank: 1,
+                mockTestSeriesId: '$mockTestSeries',
+                totalQuestions: 1,
+                timeTaken: 1
               }
             }
           ],
@@ -251,6 +270,17 @@ exports.getRankings = async (req, res) => {
             },
             { $unwind: { path: '$userDetails', preserveNullAndEmptyArrays: false } },
 
+            // Lookup series details to get seriesName
+            {
+              $lookup: {
+                from: 'mocktestseries',
+                localField: 'mockTestSeries',
+                foreignField: '_id',
+                as: 'seriesDetails'
+              }
+            },
+            { $unwind: { path: '$seriesDetails', preserveNullAndEmptyArrays: true } },
+
             // Final projection
             {
               $project: {
@@ -262,8 +292,12 @@ exports.getRankings = async (req, res) => {
                 userImage: '$userDetails.image',
                 score: 1,
                 testName: 1,
+                seriesName: '$seriesDetails.seriesName',
                 attemptDate: 1,
-                rank: 1
+                rank: 1,
+                mockTestSeriesId: '$mockTestSeries',
+                totalQuestions: 1,
+                timeTaken: 1
               }
             }
           ]
@@ -363,21 +397,24 @@ exports.getUserRankingByName = async (req, res) => {
       // Sort before grouping so $first gives the latest attempt
       { $sort: { attemptDate: -1 } },
 
-      // Group by user + testName to get latest attempt per test
+      // Group by user + testName + series to get latest attempt per specific test
       {
         $group: {
-          _id: { user: '$user', testName: '$testName' },
+          _id: { user: '$user', testName: '$testName', mockTestSeries: '$mockTestSeries' },
           score: { $first: '$score' },
           attemptDate: { $first: '$attemptDate' },
           user: { $first: '$user' },
-          testName: { $first: '$testName' }
+          testName: { $first: '$testName' },
+          mockTestSeries: { $first: '$mockTestSeries' },
+          totalQuestions: { $first: '$totalQuestions' },
+          timeTaken: { $first: '$timeTaken' }
         }
       },
 
-      // Compute rank within each testName partition
+      // Assign ranks partitioned by (testName + series), sorted by score desc
       {
         $setWindowFields: {
-          partitionBy: '$testName',
+          partitionBy: { testName: '$testName', mockTestSeries: '$mockTestSeries' },
           sortBy: { score: -1 },
           output: {
             rank: { $rank: {} }
@@ -401,6 +438,17 @@ exports.getUserRankingByName = async (req, res) => {
       },
       { $unwind: { path: '$userDetails', preserveNullAndEmptyArrays: false } },
 
+      // Lookup series details to get seriesName
+      {
+        $lookup: {
+          from: 'mocktestseries',
+          localField: 'mockTestSeries',
+          foreignField: '_id',
+          as: 'seriesDetails'
+        }
+      },
+      { $unwind: { path: '$seriesDetails', preserveNullAndEmptyArrays: true } },
+
       {
         $project: {
           _id: 0,
@@ -411,8 +459,12 @@ exports.getUserRankingByName = async (req, res) => {
           userImage: '$userDetails.image',
           score: 1,
           testName: 1,
+          seriesName: '$seriesDetails.seriesName',
           attemptDate: 1,
-          rank: 1
+          rank: 1,
+          mockTestSeriesId: '$mockTestSeries',
+          totalQuestions: 1,
+          timeTaken: 1
         }
       }
     ];
@@ -448,10 +500,41 @@ exports.getAllAttemptedTestNames = async (req, res) => {
         }
       },
       {
+        $lookup: {
+          from: mongoose.model('MockTestSeries').collection.name,
+          localField: '_id.mockTestSeriesId',
+          foreignField: '_id',
+          as: 'seriesDetails'
+        }
+      },
+      {
+        $unwind: { path: '$seriesDetails', preserveNullAndEmptyArrays: true }
+      },
+      {
         $project: {
           _id: 0,
           testName: '$_id.testName',
-          mockTestSeriesId: '$_id.mockTestSeriesId'
+          mockTestSeriesId: '$_id.mockTestSeriesId',
+          seriesName: '$seriesDetails.seriesName',
+          mockTestId: {
+            $let: {
+              vars: {
+                matchedTest: {
+                  $arrayElemAt: [
+                    {
+                      $filter: {
+                        input: { $ifNull: ['$seriesDetails.mockTests', []] },
+                        as: 'mock',
+                        cond: { $eq: ['$$mock.testName', '$_id.testName'] }
+                      }
+                    },
+                    0
+                  ]
+                }
+              },
+              in: '$$matchedTest._id'
+            }
+          }
         }
       },
       { $sort: { testName: 1 } }
