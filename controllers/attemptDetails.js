@@ -1,3 +1,4 @@
+const { request } = require('express');
 const AttemptDetails = require('../models/attemptDetails'); // Adjust the path as needed
 const User = require('../models/user'); // Adjust the path as needed
 const mongoose = require('mongoose');
@@ -146,7 +147,6 @@ exports.getAttemptsByMockTest = async (req, res) => {
   }
 };
 
-
 exports.getRankings = async (req, res) => {
   try {
     const {
@@ -155,6 +155,7 @@ exports.getRankings = async (req, res) => {
       page = 1,
       limit = 10
     } = req.query;
+
 
     const pageNum = Math.max(1, parseInt(page, 10));
     const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
@@ -180,10 +181,10 @@ exports.getRankings = async (req, res) => {
       {
         $group: {
           _id: { user: '$user', testName: '$testName' },
-          score:       { $first: '$score' },
+          score: { $first: '$score' },
           attemptDate: { $first: '$attemptDate' },
-          user:        { $first: '$user' },
-          testName:    { $first: '$testName' }
+          user: { $first: '$user' },
+          testName: { $first: '$testName' }
         }
       },
 
@@ -201,10 +202,37 @@ exports.getRankings = async (req, res) => {
       // Sort by rank ascending so pagination is stable
       { $sort: { testName: 1, rank: 1 } },
 
-      // Split into metadata (total count) and paginated data
+      // Split into metadata (total count), loggedInUser, and paginated data
       {
         $facet: {
           metadata: [{ $count: 'total' }],
+          loggedInUser: [
+            { $match: { user: req.user && req.user.id ? new mongoose.Types.ObjectId(req.user.id) : null } },
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'user',
+                foreignField: '_id',
+                as: 'userDetails',
+                pipeline: [{ $project: { firstName: 1, lastName: 1, image: 1 } }]
+              }
+            },
+            { $unwind: { path: '$userDetails', preserveNullAndEmptyArrays: false } },
+            {
+              $project: {
+                _id: 0,
+                userId: '$user',
+                userName: {
+                  $concat: ['$userDetails.firstName', ' ', '$userDetails.lastName']
+                },
+                userImage: '$userDetails.image',
+                score: 1,
+                testName: 1,
+                attemptDate: 1,
+                rank: 1
+              }
+            }
+          ],
           data: [
             { $skip: skip },
             { $limit: limitNum },
@@ -227,15 +255,15 @@ exports.getRankings = async (req, res) => {
             {
               $project: {
                 _id: 0,
-                userId:      '$user',
+                userId: '$user',
                 userName: {
                   $concat: ['$userDetails.firstName', ' ', '$userDetails.lastName']
                 },
-                userImage:   '$userDetails.image',
-                score:       1,
-                testName:    1,
+                userImage: '$userDetails.image',
+                score: 1,
+                testName: 1,
                 attemptDate: 1,
-                rank:        1
+                rank: 1
               }
             }
           ]
@@ -251,10 +279,11 @@ exports.getRankings = async (req, res) => {
     res.status(200).json({
       success: true,
       data: result?.data ?? [],
+      loggedInUserRank: result?.loggedInUser || [],
       pagination: {
         total,
-        page:       pageNum,
-        limit:      limitNum,
+        page: pageNum,
+        limit: limitNum,
         totalPages,
         hasNextPage: pageNum < totalPages,
         hasPrevPage: pageNum > 1
@@ -294,7 +323,7 @@ exports.getUserRankingByName = async (req, res) => {
     const matchedUsers = await User.find({
       $or: [
         { firstName: nameRegex },
-        { lastName:  nameRegex },
+        { lastName: nameRegex },
         // match "John Doe" style full-name searches
         {
           $expr: {
@@ -338,10 +367,10 @@ exports.getUserRankingByName = async (req, res) => {
       {
         $group: {
           _id: { user: '$user', testName: '$testName' },
-          score:       { $first: '$score' },
+          score: { $first: '$score' },
           attemptDate: { $first: '$attemptDate' },
-          user:        { $first: '$user' },
-          testName:    { $first: '$testName' }
+          user: { $first: '$user' },
+          testName: { $first: '$testName' }
         }
       },
 
@@ -375,15 +404,15 @@ exports.getUserRankingByName = async (req, res) => {
       {
         $project: {
           _id: 0,
-          userId:      '$user',
+          userId: '$user',
           userName: {
             $concat: ['$userDetails.firstName', ' ', '$userDetails.lastName']
           },
-          userImage:   '$userDetails.image',
-          score:       1,
-          testName:    1,
+          userImage: '$userDetails.image',
+          score: 1,
+          testName: 1,
           attemptDate: 1,
-          rank:        1
+          rank: 1
         }
       }
     ];
@@ -412,11 +441,25 @@ exports.getUserRankingByName = async (req, res) => {
  */
 exports.getAllAttemptedTestNames = async (req, res) => {
   try {
-    const testNames = await AttemptDetails.distinct('testName');
+    const testNames = await AttemptDetails.aggregate([
+      {
+        $group: {
+          _id: { testName: '$testName', mockTestSeriesId: '$mockTestSeries' }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          testName: '$_id.testName',
+          mockTestSeriesId: '$_id.mockTestSeriesId'
+        }
+      },
+      { $sort: { testName: 1 } }
+    ]);
 
     res.status(200).json({
       success: true,
-      data: testNames.sort() // Return alphabetically sorted
+      data: testNames
     });
   } catch (error) {
     console.error('Error in getAllAttemptedTestNames:', error);
